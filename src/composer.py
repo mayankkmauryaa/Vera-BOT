@@ -1,25 +1,26 @@
 import requests
 import json
 import re
-from typing import Optional, Dict, Any
+import os
+from typing import Optional, Dict, Any, List
 from src.config import OLLAMA_URL, OLLAMA_MODEL
 
 
 class Composer:
     def __init__(self):
         self.system_prompt = self._load_system_prompt()
+        self.few_shot_examples = self._load_few_shot_examples()
         self.ollama_url = OLLAMA_URL
         self.ollama_model = OLLAMA_MODEL
-        
-    def compose(self, category: Dict[str, Any], merchant: Dict[str, Any], 
+
+    def compose(self, category: Dict[str, Any], merchant: Dict[str, Any],
                 trigger: Dict[str, Any], customer: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        
+
         send_as = "merchant_on_behalf" if customer else "vera"
-        
+
         prompt = self._build_prompt(category, merchant, trigger, customer)
         system = self.system_prompt
-        
-        # Use Ollama only
+
         try:
             response = requests.post(
                 f"{self.ollama_url}/api/generate",
@@ -27,15 +28,15 @@ class Composer:
                     "model": self.ollama_model,
                     "prompt": f"{system}\n\n{prompt}",
                     "stream": False,
-                    "options": {"temperature": 0, "num_predict": 150}
+                    "options": {"temperature": 0, "num_predict": 300}
                 },
                 timeout=90
             )
             response.raise_for_status()
             llm_response = response.json()["response"]
-            
+
             result = self._extract_json(llm_response)
-            
+
             return {
                 "body": result.get("body", ""),
                 "cta": result.get("cta", "open_ended"),
@@ -53,53 +54,148 @@ class Composer:
                 "suppression_key": trigger.get("suppression_key", ""),
                 "rationale": "Fallback due to Ollama error"
             }
-    
+
     def _build_prompt(self, category, merchant, trigger, customer) -> str:
-        prompt = "CONTEXT:\n"
-        
-        # Category context (simplified)
+        parts = []
+
+        parts.append("=== CATEGORY CONTEXT ===")
+        parts.append(f"Slug: {category.get('slug', '')}")
         voice = category.get("voice", {})
-        prompt += f"Category: {category.get('slug', '')}, Voice: {voice.get('tone', '')}\n"
-        prompt += f"Allowed: {', '.join(voice.get('vocab_allowed', [])[:5])}\n"
-        
-        # Merchant context (simplified)
+        parts.append(f"Tone: {voice.get('tone', '')}")
+        parts.append(f"Register: {voice.get('register', '')}")
+        parts.append(f"Code-mix: {voice.get('code_mix', '')}")
+        parts.append(f"Vocab allowed: {', '.join(voice.get('vocab_allowed', [])[:8])}")
+        parts.append(f"Vocab taboo: {', '.join(voice.get('vocab_taboo', [])[:5])}")
+
+        digest = category.get("digest", [])
+        if digest:
+            parts.append("\n--- Research Digest Items ---")
+            for item in digest[:3]:
+                parts.append(f"  [{item.get('id', '')}] {item.get('title', '')}")
+                parts.append(f"    Source: {item.get('source', '')}")
+                parts.append(f"    Summary: {item.get('summary', '')}")
+                if item.get('actionable'):
+                    parts.append(f"    Actionable: {item['actionable']}")
+                parts.append("")
+
+        seasonal = category.get("seasonal_beats", [])
+        if seasonal:
+            parts.append("--- Seasonal Beats ---")
+            for beat in seasonal:
+                parts.append(f"  {beat.get('month_range', '')}: {beat.get('note', '')}")
+
+        trend = category.get("trend_signals", [])
+        if trend:
+            parts.append("--- Trend Signals ---")
+            for t in trend[:3]:
+                parts.append(f"  Query '{t.get('query', '')}': +{int(t.get('delta_yoy', 0)*100)}% YoY, age {t.get('segment_age', '')}, {t.get('skew', '')}")
+
+        parts.append("\n=== MERCHANT CONTEXT ===")
         identity = merchant.get("identity", {})
-        prompt += f"Merchant: {identity.get('name', '')}, Owner: {identity.get('owner_first_name', '')}\n"
-        
+        parts.append(f"Name: {identity.get('name', '')}")
+        parts.append(f"Owner: {identity.get('owner_first_name', '')}")
+        parts.append(f"Locality: {identity.get('locality', identity.get('city', ''))}")
+        parts.append(f"Languages: {', '.join(identity.get('languages', []))}")
+
         perf = merchant.get("performance", {})
-        prompt += f"Views: {perf.get('views', 0)}, Calls: {perf.get('calls', 0)}\n"
-        
+        parts.append(f"\nPerformance (30d window):")
+        parts.append(f"  Views: {perf.get('views', 0)}, Calls: {perf.get('calls', 0)}, CTR: {perf.get('ctr', 0)}")
+        parts.append(f"  Leads: {perf.get('leads', 0)}, Directions: {perf.get('directions', 0)}")
+        delta = perf.get("delta_7d", {})
+        if delta:
+            parts.append(f"  7d delta: views {delta.get('views_pct', 0)*100:+.0f}%, calls {delta.get('calls_pct', 0)*100:+.0f}%, ctr {delta.get('ctr_pct', 0)*100:+.0f}%")
+
         offers = merchant.get("offers", [])
-        active = [o["title"] for o in offers if o.get("status") == "active"]
+        active = [o for o in offers if o.get("status") == "active"]
         if active:
-            prompt += f"Offers: {', '.join(active[:2])}\n"
-        
-        # Trigger context
-        prompt += f"\nTrigger: {trigger.get('kind', '')}\n"
-        
-        # Add research digest if available
-        if trigger.get("kind") == "research_digest":
-            digest = category.get("digest", [])
-            if digest:
-                item = digest[0]
-                prompt += f"Research: {item.get('headline', '')}\n"
-        
-        # Customer context (simplified)
+            parts.append(f"\nActive Offers:")
+            for o in active:
+                parts.append(f"  - {o.get('title', '')} (started {o.get('started', '')})")
+
+        cust_agg = merchant.get("customer_aggregate", {})
+        if cust_agg:
+            parts.append(f"\nCustomer Aggregate:")
+            parts.append(f"  Total unique YTD: {cust_agg.get('total_unique_ytd', 0)}")
+            parts.append(f"  Lapsed 180d+: {cust_agg.get('lapsed_180d_plus', 0)}")
+            parts.append(f"  6mo retention: {cust_agg.get('retention_6mo_pct', 0)*100:.0f}%")
+            if cust_agg.get('high_risk_adult_count'):
+                parts.append(f"  High-risk adult cohort: {cust_agg['high_risk_adult_count']}")
+
+        signals = merchant.get("signals", [])
+        if signals:
+            parts.append(f"\nSignals: {', '.join(signals)}")
+
+        reviews = merchant.get("review_themes", [])
+        if reviews:
+            parts.append(f"\nReview Themes:")
+            for r in reviews[:3]:
+                parts.append(f"  [{r.get('sentiment', '')}] {r.get('theme', '')}: {r.get('occurrences_30d', 0)}x - \"{r.get('common_quote', '')}\"")
+
+        parts.append("\n=== TRIGGER CONTEXT ===")
+        parts.append(f"Kind: {trigger.get('kind', '')}")
+        parts.append(f"Urgency: {trigger.get('urgency', '')}")
+        parts.append(f"Source: {trigger.get('source', '')}")
+        payload = trigger.get("payload", {})
+        if payload:
+            parts.append(f"Payload: {json.dumps(payload)}")
+        parts.append(f"Suppression key: {trigger.get('suppression_key', '')}")
+
         if customer:
+            parts.append("\n=== CUSTOMER CONTEXT ===")
             cust_id = customer.get("identity", {})
-            prompt += f"\nCustomer: {cust_id.get('name', '')}, State: {customer.get('state', '')}\n"
-        
-        prompt += "\nReturn JSON: {\"body\": \"message\", \"cta\": \"choice\", \"send_as\": \"vera\", \"rationale\": \"reason\"}\n"
-        
-        return prompt
-    
+            parts.append(f"Name: {cust_id.get('name', '')}")
+            parts.append(f"Language preference: {cust_id.get('language_pref', customer.get('language_pref', ''))}")
+            parts.append(f"State: {customer.get('state', '')}")
+            if customer.get("relationship"):
+                parts.append(f"Relationship: {customer['relationship']}")
+            if customer.get("consent"):
+                parts.append(f"Consent: {customer['consent']}")
+
+        parts.append("\n=== RELEVANT FEW-SHOT EXAMPLES ===")
+        trigger_kind = trigger.get("kind", "")
+        matching_examples = self.few_shot_examples.get(trigger_kind, [])
+        if matching_examples:
+            for ex in matching_examples[:2]:
+                parts.append(f"Example context: {ex.get('context', '')}")
+                output = ex.get("output", {})
+                parts.append(f"Example body: \"{output.get('body', '')}\"")
+                parts.append(f"Example cta: {output.get('cta', '')}")
+                parts.append("")
+        else:
+            parts.append("(No exact match for this trigger kind. Use the category voice and compulsion levers from system prompt.)")
+
+        parts.append("\n=== YOUR TASK ===")
+        parts.append("Compose a WhatsApp message using ALL relevant context above. Rules:")
+        parts.append("1. Use real numbers, dates, and facts from the context - NEVER fabricate data")
+        parts.append("2. Match the category voice (tone, register, code-mix) exactly")
+        parts.append("3. Use the merchant's name/owner name correctly")
+        parts.append("4. Connect the message to WHY NOW (the trigger)")
+        parts.append("5. Include ONE clear CTA at the end")
+        parts.append("6. Use 1+ compulsion levers: specificity, loss aversion, social proof, effort externalization, curiosity")
+        parts.append("7. Keep it concise (WhatsApp-length, under 160 chars ideal)")
+        parts.append("\nReturn ONLY valid JSON:")
+        parts.append('{"body": "...", "cta": "binary_yes_no|open_ended|multi_choice_slot|none", "send_as": "vera|merchant_on_behalf", "suppression_key": "...", "rationale": "..."}')
+
+        return "\n".join(parts)
+
     def _load_system_prompt(self) -> str:
         try:
-            with open("src/prompts/system_prompt.txt", "r") as f:
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            path = os.path.join(base_dir, "src", "prompts", "system_prompt.txt")
+            with open(path, "r") as f:
                 return f.read()
         except:
             return "You are Vera, a merchant AI assistant. Compose WhatsApp messages using the 4-context framework."
-    
+
+    def _load_few_shot_examples(self) -> Dict[str, List[Dict[str, Any]]]:
+        try:
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            path = os.path.join(base_dir, "src", "prompts", "few_shot_examples.json")
+            with open(path, "r") as f:
+                return json.load(f)
+        except:
+            return {}
+
     def _extract_json(self, text: str) -> Dict[str, Any]:
         json_match = re.search(r'\{[\s\S]*\}', text)
         if json_match:

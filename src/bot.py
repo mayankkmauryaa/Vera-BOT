@@ -7,10 +7,11 @@ from src.context_store import ContextStore
 from src.composer import Composer
 from src.conversation import ConversationManager
 
+MAX_ACTIONS_PER_TICK = 20
+
 app = FastAPI(title="Vera AI Challenge Bot")
 START_TIME = time.time()
 
-# Initialize components
 context_store = ContextStore()
 composer = Composer()
 conv_manager = ConversationManager()
@@ -53,32 +54,30 @@ async def push_context(body: ContextPushRequest):
 @app.post("/v1/tick", response_model=TickResponse)
 async def tick(body: TickRequest):
     actions = []
-    
+
     for trg_id in body.available_triggers:
-        # Get trigger
+        if len(actions) >= MAX_ACTIONS_PER_TICK:
+            break
+
         trigger = context_store.get_context("trigger", trg_id)
         if not trigger:
             continue
-        
-        # Get merchant
+
         merchant_id = trigger.get("merchant_id")
         merchant = context_store.get_context("merchant", merchant_id)
         if not merchant:
             continue
-        
-        # Get category
+
         category_slug = merchant.get("category_slug")
         category = context_store.get_context("category", category_slug)
         if not category:
             continue
-        
-        # Get customer (if customer-scoped trigger)
+
         customer = None
         customer_id = trigger.get("customer_id")
         if customer_id:
             customer = context_store.get_context("customer", customer_id)
-        
-        # Compose message
+
         try:
             result = composer.compose(category, merchant, trigger, customer)
             actions.append({
@@ -96,17 +95,16 @@ async def tick(body: TickRequest):
             })
         except Exception as e:
             print(f"Compose error for {trg_id}: {e}")
-    
+
     return {"actions": actions}
 
 
 @app.post("/v1/reply", response_model=ReplyResponse)
 async def reply(body: ReplyRequest):
-    print(f"[DEBUG] Reply received: conv_id={body.conversation_id}, turn={body.turn_number}, msg={body.message[:50]}...", flush=True)
-    print(f"[DEBUG] Auto-reply tracker state: {conv_manager.auto_reply_tracker}", flush=True)
+    print(f"[DEBUG] Reply: conv_id={body.conversation_id}, turn={body.turn_number}, from_role={body.from_role}, msg={body.message[:50]}...", flush=True)
     result = conv_manager.handle_reply(
         body.conversation_id, body.merchant_id, body.customer_id,
-        body.message, body.turn_number
+        body.message, body.turn_number, body.from_role
     )
     print(f"[DEBUG] Reply result: {result}", flush=True)
     return result

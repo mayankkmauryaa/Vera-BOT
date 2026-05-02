@@ -98,5 +98,7 @@ SUBMISSION.md
 
 # Project reference directories (keep locally, NOT in GitHub)
 challenge/
+challenge zip extracted/
 engagement/
 examples/
+website.md
