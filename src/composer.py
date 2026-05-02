@@ -3,15 +3,15 @@ import json
 import re
 import os
 from typing import Optional, Dict, Any, List
-from src.config import OLLAMA_URL, OLLAMA_MODEL
+from src.config import GROQ_API_KEY, GROQ_MODEL
 
 
 class Composer:
     def __init__(self):
         self.system_prompt = self._load_system_prompt()
         self.few_shot_examples = self._load_few_shot_examples()
-        self.ollama_url = OLLAMA_URL
-        self.ollama_model = OLLAMA_MODEL
+        self.groq_api_key = GROQ_API_KEY
+        self.groq_model = GROQ_MODEL
 
     def compose(self, category: Dict[str, Any], merchant: Dict[str, Any],
                 trigger: Dict[str, Any], customer: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -23,17 +23,21 @@ class Composer:
 
         try:
             response = requests.post(
-                f"{self.ollama_url}/api/generate",
+                "https://api.groq.com/openai/v1/chat/completions",
                 json={
-                    "model": self.ollama_model,
-                    "prompt": f"{system}\n\n{prompt}",
-                    "stream": False,
-                    "options": {"temperature": 0, "num_predict": 300}
+                    "model": self.groq_model,
+                    "messages": [
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": prompt}
+                    ],
+                    "temperature": 0,
+                    "max_tokens": 300
                 },
-                timeout=90
+                headers={"Authorization": f"Bearer {self.groq_api_key}", "Content-Type": "application/json"},
+                timeout=30
             )
             response.raise_for_status()
-            llm_response = response.json()["response"]
+            llm_response = response.json()["choices"][0]["message"]["content"]
 
             result = self._extract_json(llm_response)
 
@@ -45,14 +49,14 @@ class Composer:
                 "rationale": result.get("rationale", "")
             }
         except Exception as e:
-            print(f"Ollama error: {e}")
+            print(f"Groq error: {e}")
             owner = merchant.get("identity", {}).get("owner_first_name", "there")
             return {
                 "body": f"Hi {owner}, quick update coming shortly.",
                 "cta": "none",
                 "send_as": send_as,
                 "suppression_key": trigger.get("suppression_key", ""),
-                "rationale": "Fallback due to Ollama error"
+                "rationale": "Fallback due to Groq error"
             }
 
     def _build_prompt(self, category, merchant, trigger, customer) -> str:
