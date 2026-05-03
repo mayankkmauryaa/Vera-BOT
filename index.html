@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vera Bot API Dashboard v1.2.0</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>" />
     <style>
       * {
         margin: 0;
@@ -11,106 +12,159 @@
         box-sizing: border-box;
       }
       body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #0f0f23;
+        color: #e0e0e0;
         min-height: 100vh;
         padding: 20px;
+        position: relative;
+        overflow-x: hidden;
+      }
+      /* Starry background */
+      body::before {
+        content: '';
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-image:
+          radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+          radial-gradient(2px 2px at 40px 70px, #fff, transparent),
+          radial-gradient(2px 2px at 50px 160px, #ddd, transparent),
+          radial-gradient(2px 2px at 90px 40px, #fff, transparent),
+          radial-gradient(2px 2px at 130px 80px, #fff, transparent),
+          radial-gradient(2px 2px at 160px 120px, #ddd, transparent),
+          radial-gradient(1px 1px at 200px 30px, #fff, transparent),
+          radial-gradient(1px 1px at 250px 90px, #ddd, transparent),
+          radial-gradient(1px 1px at 300px 50px, #fff, transparent),
+          radial-gradient(1px 1px at 350px 130px, #ddd, transparent),
+          radial-gradient(1px 1px at 400px 70px, #fff, transparent);
+        background-repeat: repeat;
+        background-size: 500px 500px;
+        animation: stars 120s linear infinite;
+        z-index: -1;
+      }
+      @keyframes stars {
+        from { transform: translateY(0); }
+        to { transform: translateY(-500px); }
       }
       a {
-        background-color: aquamarine;
+        color: #8b5cf6;
         text-decoration: none;
-        color: #1f2937;
-        font-size: large;
+        font-size: 14px;
       }
+      a:hover { color: #a78bfa; }
       .container {
         max-width: 1200px;
         margin: 0 auto;
+        position: relative;
+        z-index: 1;
       }
       .header {
-        background: rgba(255, 255, 255, 0.95);
+        background: rgba(15, 15, 35, 0.9);
+        border: 1px solid #2d2d5a;
         padding: 20px;
         border-radius: 10px;
         margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
       }
       .header h1 {
-        color: #667eea;
+        color: #8b5cf6;
         margin-bottom: 10px;
+        font-size: 28px;
+        text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
       }
       .header .status {
         display: flex;
         gap: 20px;
         align-items: center;
+        flex-wrap: wrap;
       }
       .status-dot {
         width: 12px;
         height: 12px;
         border-radius: 50%;
         display: inline-block;
+        box-shadow: 0 0 8px currentColor;
       }
       .status-dot.online {
         background: #10b981;
+        color: #10b981;
       }
       .status-dot.offline {
         background: #ef4444;
+        color: #ef4444;
       }
       .card {
-        background: rgba(255, 255, 255, 0.95);
+        background: rgba(15, 15, 35, 0.9);
+        border: 1px solid #2d2d5a;
         border-radius: 10px;
         padding: 20px;
         margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.2);
+        transition: transform 0.3s, box-shadow 0.3s;
+      }
+      .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
       }
       .card h2 {
-        color: #764ba2;
+        color: #a78bfa;
         margin-bottom: 15px;
-        border-bottom: 2px solid #e5e7eb;
+        border-bottom: 2px solid #2d2d5a;
         padding-bottom: 10px;
+        font-size: 18px;
       }
       .endpoint {
-        font-family: monospace;
-        color: #667eea;
+        font-family: 'Courier New', monospace;
+        color: #8b5cf6;
         font-weight: bold;
       }
-      .method-get {
-        color: #10b981;
-      }
-      .method-post {
-        color: #f59e0b;
-      }
-      input,
-      textarea,
-      select,
-      button {
+      .method-get { color: #10b981; }
+      .method-post { color: #f59e0b; }
+      input, textarea, select {
         width: 100%;
         padding: 10px;
         margin: 5px 0;
-        border: 1px solid #d1d5db;
+        border: 1px solid #2d2d5a;
         border-radius: 5px;
         font-size: 14px;
+        background: rgba(15, 15, 35, 0.8);
+        color: #e0e0e0;
+        font-family: 'Courier New', monospace;
+      }
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: #8b5cf6;
+        box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
       }
       button {
-        background: #667eea;
-        color: white;
+        width: 100%;
+        padding: 12px;
+        margin: 5px 0;
         border: none;
+        border-radius: 5px;
+        font-size: 14px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
         cursor: pointer;
         font-weight: bold;
-        transition: background 0.3s;
+        transition: transform 0.2s, box-shadow 0.2s;
       }
       button:hover {
-        background: #764ba2;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
       }
       .response {
-        background: #1f2937;
-        color: #d1d5db;
+        background: #0a0a1a;
+        color: #a78bfa;
         padding: 15px;
         border-radius: 5px;
         margin-top: 10px;
-        font-family: monospace;
+        font-family: 'Courier New', monospace;
         font-size: 12px;
         max-height: 300px;
         overflow-y: auto;
         white-space: pre-wrap;
+        border: 1px solid #2d2d5a;
       }
       .grid {
         display: grid;
@@ -123,12 +177,9 @@
         gap: 10px;
       }
       @media (max-width: 768px) {
-        .grid {
-          grid-template-columns: 1fr;
-        }
-        .two-col {
-          grid-template-columns: 1fr;
-        }
+        .grid { grid-template-columns: 1fr; }
+        .two-col { grid-template-columns: 1fr; }
+        .header h1 { font-size: 22px; }
       }
     </style>
   </head>
