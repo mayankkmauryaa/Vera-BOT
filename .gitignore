@@ -53,3 +53,6 @@ challenge/
 engagement/
 examples/
 website.md
+
+# Test files (generated during testing)
+test_*.json
