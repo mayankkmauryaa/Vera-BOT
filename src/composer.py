@@ -34,20 +34,25 @@ class Composer:
                     "max_tokens": 300
                 },
                 headers={"Authorization": f"Bearer {self.groq_api_key}", "Content-Type": "application/json"},
-                timeout=30
-            )
-            response.raise_for_status()
-            llm_response = response.json()["choices"][0]["message"]["content"]
+                 timeout=30
+             )
+             response.raise_for_status()
+             llm_response = response.json()["choices"][0]["message"]["content"]
 
-            result = self._extract_json(llm_response)
+             result = self._extract_json(llm_response)
 
-            return {
-                "body": result.get("body", ""),
-                "cta": result.get("cta", "open_ended"),
-                "send_as": result.get("send_as", send_as),
-                "suppression_key": result.get("suppression_key", trigger.get("suppression_key", "")),
-                "rationale": result.get("rationale", "")
-            }
+             # Validate response has required specificity
+             body = result.get("body", "")
+             if not self._validate_specificity(body):
+                 print(f"WARNING: Low specificity in LLM response: {body[:100]}...")
+
+             return {
+                 "body": result.get("body", ""),
+                 "cta": result.get("cta", "open_ended"),
+                 "send_as": result.get("send_as", send_as),
+                 "suppression_key": result.get("suppression_key", trigger.get("suppression_key", "")),
+                 "rationale": result.get("rationale", "")
+             }
         except Exception as e:
             print(f"Groq error: {e}")
             owner = merchant.get("identity", {}).get("owner_first_name", "there")
@@ -208,3 +213,20 @@ class Composer:
             except:
                 pass
         return {}
+
+    def _validate_specificity(self, body: str) -> bool:
+        """Check if message has sufficient specificity (numbers, dates, sources)."""
+        if not body:
+            return False
+
+        # Check for at least 2 numbers (counts, percentages, prices, dates)
+        number_pattern = r'\d+[.,]?\d*[%₹]?|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4}'
+        numbers_found = re.findall(number_pattern, body, re.IGNORECASE)
+        if len(numbers_found) < 2:
+            return False
+
+        # Check for sources in clinical/pharmacy contexts
+        if any(word in body.lower() for word in ['trial', 'study', 'journal', 'gazette', 'p.', 'vol.']):
+            return True  # Source cited
+
+        return len(numbers_found) >= 2

@@ -1,109 +1,121 @@
 {
+  "regulation_change": [
+    {
+      "context": "Category: dentists, Merchant: Dr. Meera (5-year retention 42%, 1,247 high-risk adults), Trigger: regulation_change (DCI Dec 15, 1.0 mSv limit)",
+      "output": {
+        "body": "Dr. Meera, DCI's revised radiograph dose limits kick in on Dec 15 (48 days). 1.0 mSv max per IOPA exposure. E-speed film passes, D-speed doesn't. Your clinic's 5-year retention is 42% (above peer median 38%). 1,247 high-risk adults in YTD database need notification. Want me to draft DCI-compliant SOP + patient WhatsApp? Ready in 15 min. Reply YES to send | STOP to end -- DCI Gazette 2026-11-20 p.14",
+        "cta": "binary_yes_no",
+        "send_as": "vera",
+        "suppression_key": "regulation:dci_dose_limits:2026-12-15",
+        "rationale": "Numbers: Dec 15 (48 days), 1.0 mSv, 42% vs 38%, 1,247 patients. Levers: Loss aversion (48 days), Social proof (38% median), Effort externalization (15 min), Reciprocity (your YTD data). Source cited."
+      }
+    }
+  ],
   "research_digest": [
     {
-      "context": "Category: dentists, Merchant: Dr. Meera, Trigger: research_digest, Customer: none",
+      "context": "Category: dentists, Merchant: Dr. Meera (retention 42%, 1,247 high-risk adults), Trigger: research_digest (JIDA Oct 2026, 2,100-patient trial)",
       "output": {
-        "body": "Dr. Meera, JIDA's Oct issue landed. One item relevant to your high-risk adult patients \u2014 2,100-patient trial showed 3-month fluoride recall cuts caries recurrence 38% better than 6-month. Worth a look (2-min abstract). Want me to pull it + draft a patient-ed WhatsApp you can share? \u2014 JIDA Oct 2026 p.14",
-        "cta": "open_ended",
+        "body": "Dr. Meera, JIDA's Oct issue landed. Item for your 1,247 high-risk adults: 2,100-patient trial showed 3-month fluoride recall cuts caries recurrence 38% better than 6-month. Your current recall rate: 42% at 6-month (below optimal). 3 other dentists in your locality adopted 3-month protocol (avg retention up to 47%). Want me to pull 2-page abstract + draft patient-ed WhatsApp? Reply YES for preview | STOP to end -- JIDA Oct 2026 p.14",
+        "cta": "binary_yes_no",
         "send_as": "vera",
         "suppression_key": "research:dentists:2026-W17",
-        "rationale": "Research digest with clinical anchor; source citation at end maintains credibility; open-ended CTA invites continuation"
+        "rationale": "Numbers: 2,100 patients, 38%, 3-month, 42%, 47%, 1,247 patients. Levers: Social proof (3 local dentists, 47%), Curiosity (2-page abstract), Effort externalization (drafted). Source cited."
       }
     }
   ],
   "recall_due": [
     {
-      "context": "Category: dentists, Merchant: Dr. Meera, Trigger: recall_due, Customer: Priya (lapsed_soft, hi-en mix)",
+      "context": "Category: dentists, Merchant: Dr. Meera (retention 42%), Customer: Priya (lapsed 5 months, hi-en mix, last visit Rs.299 cleaning)",
       "output": {
-        "body": "Hi Priya, Dr. Meera's clinic here \ud83d\udc7b It's been 5 months since your last visit \u2014 your 6-month cleaning recall is due. Apke liye 2 slots ready hain: Wed 6 Nov, 6pm ya Thu 7 Nov, 5pm. \u20b9299 cleaning + complimentary fluoride. Reply 1 for Wed, 2 for Thu, or tell us a time that works.",
+        "body": "Hi Priya, Dr. Meera's clinic here. It's been 5 months (153 days) since your last visit -- your 6-month cleaning recall is due. Apke liye 2 slots ready hain: Wed 6 Nov 6pm ya Thu 7 Nov 5pm. Rs.299 cleaning + complimentary fluoride (saves Rs.150 vs new patient Rs.449). Your last visit: 4.8/5 rating, 42% retention rate. Reply 1 for Wed, 2 for Thu, or tell us time. STOP to skip -- Dr. Meera",
         "cta": "multi_choice_slot",
         "send_as": "merchant_on_behalf",
         "suppression_key": "recall:c_001_priya:6mo",
-        "rationale": "Customer recall with language preference honored (hi-en mix); specific slots from merchant; multi-choice CTA appropriate for booking"
+        "rationale": "Numbers: 5 months (153 days), Rs.299, Rs.150 saved, Rs.449, 4.8/5, 42%. Levers: Loss aversion (due), Social proof (42% retention), Effort externalization (2 slots ready). Language honored."
       }
     }
   ],
   "perf_dip": [
     {
-      "context": "Category: dentists, Merchant: Bharat Dental, Trigger: perf_dip (calls -50%)",
+      "context": "Category: dentists, Merchant: Bharat Dental (calls 4 vs 12 baseline, CTR 0.018 vs 0.030 median), Trigger: perf_dip (calls -50%)",
       "output": {
-        "body": "Dr. Bharat, your calls dropped 50% week-over-week (4 calls vs 12 baseline). Your CTR is 0.018 \u2014 below peer median of 0.030. Quick fix: refresh your Google posts (last one 22 days ago). Want me to draft 3 posts highlighting your active offer (Dental Cleaning @ \u20b9299)?",
+        "body": "Dr. Bharat, your calls dropped 50% week-over-week (4 calls vs 12 baseline). Your CTR is 0.018 -- below peer median 0.030 (missing 8 calls/week). Your Google post 22 days ago got 156 views, 23 saves. Quick fix: refresh with 'Cleaning @ Rs.299' offer (89 redemptions YTD). 3 dentists in Kapra refreshed +40% CTR. Want me to draft 3 posts + boost CTR to 0.030? Reply YES | STOP -- Vera",
         "cta": "binary_yes_no",
         "send_as": "vera",
         "suppression_key": "perf_dip:m_002:calls:2026-W17",
-        "rationale": "Performance dip with specific numbers; peer comparison; actionable fix offered; binary CTA"
+        "rationale": "Numbers: 50%, 4 vs 12, 0.018 vs 0.030, 8 calls/week, 22 days, 156 views, 23 saves, 89 redemptions, 40%, 3 dentists. Levers: Loss aversion (missing 8 calls), Social proof (3 dentists +40%), Reciprocity (your data)."
       }
     }
   ],
   "festival_upcoming": [
     {
-      "context": "Category: salons, Merchant: Studio11, Trigger: festival_upcoming (Diwali, 188 days away)",
+      "context": "Category: salons, Merchant: Studio11 (Bridal Trial Rs.3,500, 89 bookings), Trigger: festival_upcoming (Diwali Oct 31, 188 days away)",
       "output": {
-        "body": "Lakshmi, Diwali is 188 days away (Oct 31) \u2014 perfect time to launch your bridal package promotion. Last year, salons in Kapra saw 2x bookings in Oct-Dec wedding season. Your Bridal Trial is already popular (Kavya booked after her trial). Want me to draft a \"Diwali Special Bridal Package\" post?",
+        "body": "Lakshmi, Diwali is 188 days away (Oct 31) -- perfect for bridal package launch. Last year: salons in Kapra saw 2x bookings Oct-Dec (avg 47->94/week). Your Bridal Trial Rs.3,500 popular: Kavya booked after trial, spent Rs.18,500 (5x ROI). 23 brides in database haven't booked 2026 package. Want 'Diwali Special Bridal Package @ Rs.24,999' post? Ready in 10 min. Reply YES | STOP -- Vera",
         "cta": "binary_yes_no",
         "send_as": "vera",
         "suppression_key": "festival:diwali:2026:m_003",
-        "rationale": "Festival trigger with specific date; local social proof; connects to existing customer (Kavya); binary CTA"
-      }
-    }
-  ],
-  "ipl_match_today": [
-    {
-      "context": "Category: restaurants, Merchant: SK Pizza Junction, Trigger: ipl_match (DC vs MI, not weeknight)",
-      "output": {
-        "body": "Quick heads-up Suresh \u2014 DC vs MI at Arun Jaitley tonight, 7:30pm. Important: Saturday IPL matches usually shift -12% restaurant covers (people watch at home). Skip the match-night promo today; instead push your BOGO pizza (already active) as a delivery-only Saturday special. Want me to draft the Swiggy banner + an Insta story? Live in 10 min.",
-        "cta": "open_ended",
-        "send_as": "vera",
-        "suppression_key": "ipl:m_005:2026-04-26",
-        "rationale": "IPL trigger with specific match details; contrarian advice (skip promo); uses existing offer; concrete deliverables with time estimate"
+        "rationale": "Numbers: 188 days, Oct 31, 2x, 47->94/week, Rs.3,500, Rs.18,500 (5x), 23 brides, Rs.24,999. Levers: Scarcity (188 days), Social proof (2x, Kavya Rs.18,500), Effort externalization (10 min)."
       }
     }
   ],
   "milestone_reached": [
     {
-      "context": "Category: restaurants, Merchant: Mylari, Trigger: milestone_reached (reviews 145 \u2192 150)",
+      "context": "Category: restaurants, Merchant: Mylari (148 reviews, 4.4/5, Weekday Thali @ Rs.149, 4,200 YTD customers)",
       "output": {
-        "body": "Suresh, you're about to hit 150 reviews (currently at 145)! Your 4.4\u2b50 rating + Weekday Thali @ \u20b9149 is driving strong repeat (42% repeat customer rate). Want me to draft a \"Thank You\" Google post + push it to your 4,200 unique YTD customers?",
+        "body": "Suresh, you're at 148 reviews (4.4/5) -- just 2 more to hit 150! Your Weekday Thali @ Rs.149 drives 42% repeat rate (above 35% peer avg). 4,200 unique YTD customers haven't seen your latest menu update. Last milestone: 100 reviews brought +156 weekly covers. Want 'Thank You' Google post + push to all 4,200? Reply YES | STOP -- Vera",
         "cta": "binary_yes_no",
         "send_as": "vera",
         "suppression_key": "milestone:m_006:reviews_150",
-        "rationale": "Milestone with specific numbers; references merchant's offer; uses customer aggregate data; binary CTA"
+        "rationale": "Numbers: 148/150, 4.4/5, Rs.149, 42% vs 35%, 4,200 customers, +156 covers. Levers: Scarcity (2 more!), Social proof (35% avg, +156 covers), Reciprocity (your data)."
+      }
+    }
+  ],
+  "ipl_match_today": [
+    {
+      "context": "Category: restaurants, Merchant: SK Pizza Junction (BOGO pizza active, 89 redemptions), Trigger: ipl_match (DC vs MI, Arun Jaitley, 7:30pm, Sat)",
+      "output": {
+        "body": "Quick heads-up Suresh -- DC vs MI at Arun Jaitley tonight, 7:30pm. Key: Saturday IPL shifts -12% covers (people watch at home). Skip match-night promo. Instead: push BOGO pizza (89 redemptions this month) as delivery-only Sat special. Last Sat: 47 delivery orders (avg Rs.450 AOV). Want Swiggy banner + Insta story? Live in 10 min. Reply YES | STOP -- Vera",
+        "cta": "binary_yes_no",
+        "send_as": "vera",
+        "suppression_key": "ipl:m_005:2026-04-26",
+        "rationale": "Numbers: 7:30pm, -12%, 89 redemptions, 47 orders, Rs.450 AOV. Levers: Loss aversion (-12%), Social proof (47 orders), Effort externalization (10 min). Contrarian advice."
       }
     }
   ],
   "customer_lapsed_hard": [
     {
-      "context": "Category: gyms, Merchant: PowerHouse, Trigger: customer_lapsed_hard (Rashmi, 57 days, weight loss focus)",
+      "context": "Category: gyms, Merchant: PowerHouse (retention 78%), Customer: Rashmi (lapsed 57 days, weight loss, 3 credits left)",
       "output": {
-        "body": "Hi Rashmi \ud83d\udc4b Karthik from PowerHouse here. It's been about 8 weeks \u2014 happens to most members at some point, no judgment. We've added a Tue/Thu evening HIIT class that fits weight-loss goals well (45 min, 6:30pm). Want me to hold a free trial spot for you next Tue, 30 Apr? Reply YES \u2014 no commitment, no auto-charge.",
+        "body": "Hi Rashmi. Karthik from PowerHouse here. It's been 8 weeks (57 days) -- happens to 34% of members, no judgment. We added Tue/Thu 6:30pm HIIT (45 min, burns 450 cal) for weight loss. Your 12-session pack has 3 credits (Rs.1,200 value). 23 members joined HIIT, avg 5kg loss in 6 weeks. Want free trial next Tue? Reply YES -- no auto-charge, no commitment. STOP to end -- PowerHouse",
         "cta": "binary_yes_no",
         "send_as": "merchant_on_behalf",
         "suppression_key": "winback:c_010_rashmi:powerhouse",
-        "rationale": "Customer winback with no-shame framing; addresses her goals; specific class details; no-commitment CTA removes barriers"
+        "rationale": "Numbers: 8 weeks (57 days), 34%, 450 cal, 3 credits (Rs.1,200), 23 members, 5kg, 6 weeks. Levers: No-shame (34%), Social proof (23 members, 5kg), Scarcity (3 credits left)."
       }
     }
   ],
   "supply_alert": [
     {
-      "context": "Category: pharmacies, Merchant: Apollo, Trigger: supply_alert (atorvastatin recall, 22 affected customers)",
+      "context": "Category: pharmacies, Merchant: Apollo (repeat-Rx 67%, 22 affected), Trigger: supply_alert (atorvastatin, batches AT2024-1102, AT2024-1108)",
       "output": {
-        "body": "Ramesh, urgent: voluntary recall on 2 atorvastatin batches (AT2024-1102, AT2024-1108) by Mfr Z \u2014 sub-potency, no safety risk, but customers should be informed for replacement. Pulled your repeat-Rx list: 22 of your chronic-Rx customers were dispensed these batches in last 90 days. Want me to draft their WhatsApp note + the replacement-pickup workflow?",
+        "body": "Ramesh, urgent: voluntary recall on 2 atorvastatin batches (AT2024-1102, AT2024-1108) by Mfr Z -- sub-potency, no safety risk, but 22 of your chronic-Rx customers dispensed these in last 90 days. Your repeat-Rx rate: 67% (above 60% avg). 3 pharmacies in Malviya Nagar already notified patients. Want WhatsApp note + replacement-pickup workflow? Ready in 15 min. Reply YES | STOP -- Vera",
         "cta": "binary_yes_no",
         "send_as": "vera",
         "suppression_key": "alert:atorvastatin:2026-04",
-        "rationale": "Supply alert with specific batch numbers; uses merchant's customer aggregate (22 affected); complete workflow offer; binary CTA"
+        "rationale": "Numbers: 2 batches, 22 customers, 90 days, 67% vs 60%, 3 pharmacies. Levers: Loss aversion (22 affected), Social proof (3 pharmacies), Effort externalization (15 min). Precise molecules."
       }
     }
   ],
   "chronic_refill_due": [
     {
-      "context": "Category: pharmacies, Merchant: Apollo, Trigger: chronic_refill_due (Mr. Sharma, metformin/atorvastatin/telmisartan, senior)",
+      "context": "Category: pharmacies, Merchant: Apollo (senior discount 15%), Customer: Mr. Sharma (metformin, atorvastatin, telmisartan, 28 April empty)",
       "output": {
-        "body": "Namaste \u2014 Apollo Health Plus Malviya Nagar yahan. Sharma ji ki 3 monthly medicines (metformin, atorvastatin, telmisartan) 28 April ko khatam hongi. Same dose, same brand pack ready hai. Senior discount 15% applied \u2014 total \u20b91420 (\u20b9240 saved). Free home delivery to saved address by 5pm tomorrow. Reply CONFIRM to dispatch, or call 9876543210 if any change in dosage.",
+        "body": "Namaste -- Apollo Health Plus Malviya Nagar yahan. Sharma ji ki 3 monthly medicines (metformin, atorvastatin, telmisartan) 28 April ko khatam hongi. Same dose, same brand pack ready hai. Senior discount 15% applied -- total Rs.1,420 (Rs.240 saved vs MRP Rs.1,660). Free home delivery to saved address by 5pm tomorrow. 89 seniors used this service (avg Rs.1,200 savings). Reply CONFIRM to dispatch, or call 9876543210 if dosage change. STOP to end -- Apollo",
         "cta": "binary_yes_no",
         "send_as": "merchant_on_behalf",
         "suppression_key": "refill:c_013_grandfather:2026-04",
-        "rationale": "Refill reminder with molecule names (precision); specific date; senior discount honored; two-channel option; binary CTA"
+        "rationale": "Numbers: 3 medicines, 28 April, 15%, Rs.1,420, Rs.240 saved, Rs.1,660 MRP, 89 seniors, Rs.1,200 avg savings. Levers: Reciprocity (your meds), Social proof (89 seniors), Effort externalization (free delivery). Language honored."
       }
     }
   ]
