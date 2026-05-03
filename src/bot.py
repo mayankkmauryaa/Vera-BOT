@@ -68,7 +68,9 @@ async def tick(body: TickRequest):
         if not merchant:
             continue
 
-        category_slug = merchant.get("category_slug")
+        category_slug = merchant.get("identity", {}).get("category_slug")
+        if not category_slug:
+            continue
         category = context_store.get_context("category", category_slug)
         if not category:
             continue
