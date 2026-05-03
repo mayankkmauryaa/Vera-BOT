@@ -4,7 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vera Bot API Dashboard v1.2.0</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>"
+    />
     <style>
       * {
         margin: 0;
@@ -12,7 +15,7 @@
         box-sizing: border-box;
       }
       body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         background: #0f0f23;
         color: #e0e0e0;
         min-height: 100vh;
@@ -22,9 +25,12 @@
       }
       /* Starry background */
       body::before {
-        content: '';
+        content: "";
         position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
         background-image:
           radial-gradient(2px 2px at 20px 30px, #eee, transparent),
           radial-gradient(2px 2px at 40px 70px, #fff, transparent),
@@ -43,15 +49,21 @@
         z-index: -1;
       }
       @keyframes stars {
-        from { transform: translateY(0); }
-        to { transform: translateY(-500px); }
+        from {
+          transform: translateY(0);
+        }
+        to {
+          transform: translateY(-500px);
+        }
       }
       a {
         color: #8b5cf6;
         text-decoration: none;
         font-size: 14px;
       }
-      a:hover { color: #a78bfa; }
+      a:hover {
+        color: #a78bfa;
+      }
       .container {
         max-width: 1200px;
         margin: 0 auto;
@@ -100,7 +112,9 @@
         padding: 20px;
         margin-bottom: 20px;
         box-shadow: 0 4px 20px rgba(139, 92, 246, 0.2);
-        transition: transform 0.3s, box-shadow 0.3s;
+        transition:
+          transform 0.3s,
+          box-shadow 0.3s;
       }
       .card:hover {
         transform: translateY(-2px);
@@ -114,13 +128,19 @@
         font-size: 18px;
       }
       .endpoint {
-        font-family: 'Courier New', monospace;
+        font-family: "Courier New", monospace;
         color: #8b5cf6;
         font-weight: bold;
       }
-      .method-get { color: #10b981; }
-      .method-post { color: #f59e0b; }
-      input, textarea, select {
+      .method-get {
+        color: #10b981;
+      }
+      .method-post {
+        color: #f59e0b;
+      }
+      input,
+      textarea,
+      select {
         width: 100%;
         padding: 10px;
         margin: 5px 0;
@@ -129,9 +149,11 @@
         font-size: 14px;
         background: rgba(15, 15, 35, 0.8);
         color: #e0e0e0;
-        font-family: 'Courier New', monospace;
+        font-family: "Courier New", monospace;
       }
-      input:focus, textarea:focus, select:focus {
+      input:focus,
+      textarea:focus,
+      select:focus {
         outline: none;
         border-color: #8b5cf6;
         box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
@@ -147,7 +169,9 @@
         color: white;
         cursor: pointer;
         font-weight: bold;
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
       }
       button:hover {
         transform: translateY(-1px);
@@ -159,7 +183,7 @@
         padding: 15px;
         border-radius: 5px;
         margin-top: 10px;
-        font-family: 'Courier New', monospace;
+        font-family: "Courier New", monospace;
         font-size: 12px;
         max-height: 300px;
         overflow-y: auto;
@@ -177,9 +201,15 @@
         gap: 10px;
       }
       @media (max-width: 768px) {
-        .grid { grid-template-columns: 1fr; }
-        .two-col { grid-template-columns: 1fr; }
-        .header h1 { font-size: 22px; }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .two-col {
+          grid-template-columns: 1fr;
+        }
+        .header h1 {
+          font-size: 22px;
+        }
       }
     </style>
   </head>

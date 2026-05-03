@@ -130,8 +130,6 @@ if __name__ == "__main__":
 import os
 INDEX_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "index.html")
 
-@app.get("/", response_class=FileResponse, include_in_schema=False)
+@app.get("/", include_in_schema=False)
 async def serve_dashboard():
-    with open(INDEX_PATH, 'r') as f:
-        html_content = f.read()
-    return HTMLResponse(content=html_content)
+    return FileResponse(INDEX_PATH)
