@@ -16,61 +16,12 @@ MANIFEST
 venv/
 ENV/
 env/
-.vscode/
-
-# Logs
-*.log
-bot.log
-bot_output.txt
-submission_log.txt
-
-# Test & debug files (NOT needed for deployment)
-test_*.py
-debug_*.py
-check_*.py
-generate_*.py
-push_*.py
-*_test.py
-*_clean.py
-*_fast.py
-*_final.py
-*_v2.py
-*_ollama.py
-*_openai.py
-*_gemini*.py
-AUTO_GENERATE.bat
-START_BOT*.bat
-FIX_*.bat
-NEW_*.bat
-PUSH_*.bat
-FRESH_*.bat
-
-# Dataset (exclude generated large files, keep only seeds)
-dataset/expanded/
-!dataset/expanded/test_pairs.json
-!dataset/expanded/categories/
-
-# Simulator output
-simulator/submission.jsonl
-simulator/__pycache__/
-
-# Temporary files
-tmp/
-temp/
-*.tmp
-
-# OS files
-Thumbs.db
-Desktop.ini
-
-# Jupyter
-.ipynb_checkpoints/
-*.ipynb
-
-# Local config (API keys - NEVER commit)
 api_keys.env
 .env.local
 .env
+.env.*.local
+
+# Environment variables
 submission_info.json
 
 # Compiled files
@@ -98,7 +49,7 @@ SUBMISSION.md
 
 # Project reference directories (keep locally, NOT in GitHub)
 challenge/
-challenge zip extracted/
+# challenge zip extracted/
 engagement/
 examples/
 website.md

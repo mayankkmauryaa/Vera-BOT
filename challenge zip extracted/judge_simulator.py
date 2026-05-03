@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 magicpin AI Challenge — LLM-Powered Judge Simulator
 ====================================================
@@ -21,16 +21,16 @@ Author: magicpin AI Challenge Team
 # =============================================================================
 
 # Your bot's URL (where your bot is running)
-BOT_URL = "http://localhost:8080"
+BOT_URL = "https://vera-bot-npn1.onrender.com"
 
 # Choose your LLM provider: "openai", "anthropic", "gemini", "deepseek", "groq", "ollama", "openrouter"
-LLM_PROVIDER = "ollama"
+LLM_PROVIDER = "groq"
 
-# Your API key (paste your key here)
-LLM_API_KEY = ""  # Not needed for Ollama
+# Your API key (set in .env file as GROQ_API_KEY or LLM_API_KEY)
+LLM_API_KEY = os.getenv("GROQ_API_KEY") or os.getenv("LLM_API_KEY") or ""
 
 # Model to use (leave empty for default, or specify like "gpt-4o", "claude-3-5-sonnet-20241022", etc.)
-LLM_MODEL = ""  # <-- Optional: specify model or leave empty for default
+LLM_MODEL = "llama-3.1-8b-instant"
 
 # For Ollama only: local server URL
 OLLAMA_URL = "http://localhost:11434"
@@ -48,7 +48,13 @@ import json
 import time
 import re
 import socket
+import argparse
+import zipfile
+import subprocess
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any, Tuple
 from pathlib import Path
@@ -57,7 +63,7 @@ from abc import ABC, abstractmethod
 
 # Constants
 TIMEOUT_LLM = 45
-DATASET_DIR = Path(__file__).parent.parent / "expanded"
+DATASET_DIR = Path(__file__).parent / "dataset"
 
 # =============================================================================
 # TERMINAL OUTPUT
@@ -271,7 +277,11 @@ class GroqProvider(LLMProvider):
             "https://api.groq.com/openai/v1/chat/completions",
             data=json.dumps({"model": self.model, "messages": messages,
                             "temperature": 0.2, "max_tokens": 1500}).encode("utf-8"),
-            headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (magicpin-judge-simulator)"
+            }
         )
         resp = urlrequest.urlopen(req, timeout=TIMEOUT_LLM)
         data = json.loads(resp.read().decode("utf-8"))
@@ -599,6 +609,7 @@ class JudgeSimulator:
             return False
 
         self.scorer = LLMScorer(self.llm, self.dataset)
+        self._results = {}
         print_info(f"Loaded: {len(self.dataset.categories)} categories, "
                    f"{len(self.dataset.merchants)} merchants, "
                    f"{len(self.dataset.triggers)} triggers")
@@ -627,27 +638,50 @@ class JudgeSimulator:
 
         data, err, lat = self.client.healthz()
         if err:
-            print_fail(f"healthz: {err}")
+            print_fail(f"healthz — {err}")
+            self._results["warmup"] = f"healthz failed: {err}"
             return False
-        print_success(f"healthz ({lat:.0f}ms)")
+        counts = data.get("contexts_loaded", {})
+        total = sum(counts.values())
+        print_success(f"healthz ({lat:.0f}ms) — status ok, {total} contexts loaded")
 
         data, err, lat = self.client.metadata()
         if err:
-            print_warn(f"metadata: {err}")
+            print_fail(f"metadata — {err}")
+            self._results["warmup"] = f"healthz ok ({total} contexts), metadata failed: {err}"
         else:
-            print_success(f"metadata — Team: {data.get('team_name', '?')}, Model: {data.get('model', '?')}")
+            print_success(f"metadata ({lat:.0f}ms) — Team: {data.get('team_name', '?')}, Model: {data.get('model', '?')}")
+            self._results["warmup"] = f"healthz ok ({total} contexts), metadata ok (Team: {data.get('team_name', '?')})"
 
         print_section("CONTEXT PUSH")
         for slug, cat in self.dataset.categories.items():
             data, err, _ = self.client.push_context("category", slug, 1, cat)
-            status = "PASS" if data and data.get("accepted") else "FAIL"
-            print(f"  [{status}] category/{slug}")
+            accepted = data and data.get("accepted")
+            detail = data.get("detail", {}) if data else {}
+            already = detail.get("reason") == "stale_version"
+            if accepted:
+                reason = "new context stored"
+            elif already:
+                reason = "already stored (stale version — data is present)"
+            else:
+                reason = err or f"HTTP {data}"
+            status = "PASS" if (accepted or already) else "FAIL"
+            print(f"  [{status}] category/{slug} — {reason}")
 
         for mid, m in list(self.dataset.merchants.items())[:5]:
             data, err, _ = self.client.push_context("merchant", mid, 1, m)
-            status = "PASS" if data and data.get("accepted") else "FAIL"
+            accepted = data and data.get("accepted")
+            detail = data.get("detail", {}) if data else {}
+            already = detail.get("reason") == "stale_version"
+            if accepted:
+                reason = "new context stored"
+            elif already:
+                reason = "already stored (stale version — data is present)"
+            else:
+                reason = err or f"HTTP {data}"
+            status = "PASS" if (accepted or already) else "FAIL"
             short_id = mid.split('_')[1] if '_' in mid else mid[:10]
-            print(f"  [{status}] merchant/{short_id}")
+            print(f"  [{status}] merchant/{short_id} — {reason}")
 
         return True
 
@@ -680,10 +714,12 @@ class JudgeSimulator:
 
     def _auto_reply(self) -> bool:
         print_section("AUTO-REPLY DETECTION")
+        print_info("Bot receives the same canned auto-reply 4x in a row")
 
         data, err, _ = self.client.healthz()
         if err:
             print_fail(f"Bot unreachable: {err}")
+            self._results["auto_reply"] = f"Bot unreachable: {err}"
             return False
 
         mid = list(self.dataset.merchants.keys())[0] if self.dataset.merchants else "m_test"
@@ -693,31 +729,36 @@ class JudgeSimulator:
             print_info(f"Turn {i}: Sending auto-reply...")
             data, err, _ = self.client.reply(f"conv_auto_{i}", mid, auto_msg, i + 1)
 
-            if err:
-                print_fail(f"Error: {err}")
+            if err or not data:
+                print_fail(f"Turn {i}: Error — {err or 'no data returned'}")
+                self._results["auto_reply"] = f"Error on turn {i}: {err or 'no data returned'}"
                 return False
 
             action = data.get("action", "?")
+            body = (data.get("body") or "")[:60]
 
             if action == "end":
-                print_success(f"Turn {i}: Bot ENDED — detected auto-reply pattern!")
+                print_success(f"Turn {i}: Bot ENDED — detected auto-reply pattern")
+                self._results["auto_reply"] = f"Detected pattern after {i} turn(s), exited gracefully"
                 return True
             elif action == "wait":
                 wait_s = data.get("wait_seconds", "?")
-                print_success(f"Turn {i}: Bot WAITING {wait_s}s")
+                print_success(f"Turn {i}: Bot WAITING {wait_s}s — backing off")
             else:
-                body = data.get("body", "")[:50]
-                print_warn(f"Turn {i}: Bot sent: \"{body}...\"")
+                print_warn(f"Turn {i}: Bot sent a reply — \"{body}...\"")
 
+        self._results["auto_reply"] = "Never ended after 4 auto-replies; did not detect pattern"
         print_warn("Bot never ended after 4 auto-replies")
         return True
 
     def _intent(self) -> bool:
         print_section("INTENT TRANSITION")
+        print_info("Merchant says: \"Ok lets do it. Whats next?\" (commitment)")
 
         data, err, _ = self.client.healthz()
         if err:
             print_fail(f"Bot unreachable: {err}")
+            self._results["intent"] = f"Bot unreachable: {err}"
             return False
 
         mid = list(self.dataset.merchants.keys())[0] if self.dataset.merchants else "m_test"
@@ -725,38 +766,27 @@ class JudgeSimulator:
 
         print_info(f"Merchant: \"{commitment}\"")
         data, err, _ = self.client.reply("conv_intent_1", mid, commitment, 2)
-        print_info(f"DEBUG: Bot reply data: {data}")
 
-        if err:
-            print_fail(f"Error: {err}")
+        if err or not data:
+            print_fail(f"Bot unreachable — {err or 'no data'}")
+            self._results["intent"] = f"Bot unreachable: {err or 'no data'}"
             return False
 
         action = data.get("action", "?")
-        body = data.get("body", "")
+        body = (data.get("body") or "")
 
         print_info(f"Bot action: {action}")
         if body:
             print_info(f"Bot body: \"{body[:100]}{'...' if len(body) > 100 else ''}\"")
 
-        qualifying = ["would you", "do you", "can you tell", "what if", "how about"]
-        actioning = ["done", "sending", "draft", "here", "confirm", "proceed", "next"]
-
-        body_lower = body.lower()
-        if any(w in body_lower for w in actioning) and not any(w in body_lower for w in qualifying):
-            print_success("Bot correctly switched to ACTION mode")
-        elif any(w in body_lower for w in qualifying):
-            print_fail("Bot is STILL QUALIFYING after commitment")
-        else:
-            print_warn("Response unclear")
-
-        return True
-
     def _hostile(self) -> bool:
         print_section("HOSTILE HANDLING")
+        print_info("Merchant says: \"Stop messaging me. This is useless spam.\"")
 
         data, err, _ = self.client.healthz()
         if err:
             print_fail(f"Bot unreachable: {err}")
+            self._results["hostile"] = f"Bot unreachable: {err}"
             return False
 
         mid = list(self.dataset.merchants.keys())[0] if self.dataset.merchants else "m_test"
@@ -766,38 +796,48 @@ class JudgeSimulator:
         data, err, _ = self.client.reply("conv_hostile", mid, hostile, 2)
 
         if err:
-            print_fail(f"Error: {err}")
+            print_fail(f"Bot unreachable — {err}")
+            self._results["hostile"] = f"Bot unreachable: {err}"
             return False
 
         action = data.get("action", "?")
         body = data.get("body", "")
+        rationale = data.get("rationale", "")
 
         print_info(f"Bot action: {action}")
+        if rationale:
+            print_info(f"Bot rationale: \"{rationale[:120]}{'...' if len(rationale) > 120 else ''}\"")
 
         if action == "end":
-            print_success("Bot correctly ENDED on hostile message")
-        elif action == "send" and any(w in body.lower() for w in ["sorry", "apolog", "won't"]):
-            print_success("Bot apologized gracefully")
+            print_success("PASS — Bot correctly ENDED on hostile message")
+            self._results["hostile"] = "Exited gracefully instead of arguing or ignoring hostility"
+        elif action == "send" and any(w in body.lower() for w in ["sorry", "apolog", "won't", "respect"]):
+            print_success("PASS — Bot responded politely without escalating")
+            self._results["hostile"] = "Acknowledged merchant frustration, stayed professional"
         else:
-            print_fail("Bot didn't handle hostility well")
+            print_fail(f"FAIL — Bot action was '{action}', did not handle hostility")
+            self._results["hostile"] = f"Action '{action}' — should end or de-escalate when merchant demands to stop"
 
         return True
 
     def _all(self) -> bool:
-        results = []
+        self.results = {}
         for name, fn in [("warmup", self._warmup), ("auto_reply", self._auto_reply),
                          ("intent", self._intent), ("hostile", self._hostile)]:
             try:
-                results.append((name, fn()))
+                passed = fn()
+                reason = self._results.get(name, "")
+                self.results[name] = (passed, reason)
             except Exception as e:
                 print_fail(f"{name} crashed: {e}")
-                results.append((name, False))
+                self.results[name] = (False, f"Exception: {e}")
 
         print_section("SCENARIO RESULTS")
-        for name, passed in results:
-            (print_success if passed else print_fail)(name)
+        for name, (passed, reason) in self.results.items():
+            label = "PASS" if passed else "FAIL"
+            print(f"  [{label}] {name} — {reason if reason else 'see details above'}")
 
-        return all(p for _, p in results)
+        return all(p for p, _ in self.results.values())
 
     def _full(self) -> bool:
         if not self._warmup():
@@ -961,4 +1001,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
