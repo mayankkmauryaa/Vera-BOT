@@ -14,7 +14,7 @@ START_TIME = time.time()
 
 context_store = ContextStore()
 composer = Composer()
-conv_manager = ConversationManager()
+conv_manager = ConversationManager(context_store)
 
 
 @app.get("/v1/healthz", response_model=HealthzResponse)

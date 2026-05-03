@@ -4,9 +4,11 @@ from typing import Dict, Any, Optional
 
 
 class ConversationManager:
-    def __init__(self):
+    def __init__(self, context_store=None):
         self.conversations: Dict[str, list] = {}
         self.auto_reply_tracker: Dict[str, int] = {}
+        self.conversation_context: Dict[str, dict] = {}
+        self.context_store = context_store
 
         self.auto_reply_patterns = [
             r"thank you for contacting",
@@ -16,14 +18,17 @@ class ConversationManager:
         ]
 
         self.hostile_patterns = [
-            "stop messaging", "not interested", "useless",
-            "spam", "bothering", "stop sending"
+            "stop", "stop messaging", "not interested", "useless",
+            "spam", "bothering", "stop sending", "no thanks",
+            "don't message", "unsubscribe", "remove me"
         ]
 
         self.intent_patterns = [
             "ok let's do it", "yes let's", "go ahead",
             "proceed", "send it", "do it", "yes please",
-            "ok lets do it", "yes, send", "sure, go ahead"
+            "ok lets do it", "yes, send", "sure, go ahead",
+            "yes", "sure", "ok", "okay", "yep", "yeah",
+            "sounds good", "that works", "interested"
         ]
 
         self.off_topic_patterns = [
@@ -39,6 +44,21 @@ class ConversationManager:
             "msg": message,
             "turn": turn_number
         })
+
+        # Store context for this conversation
+        if merchant_id and merchant_id not in self.conversation_context:
+            self.conversation_context[conv_id] = {
+                "merchant_id": merchant_id,
+                "customer_id": customer_id,
+                "merchant": None,
+                "customer": None,
+                "trigger": None
+            }
+            # Try to load merchant context
+            if self.context_store:
+                self.conversation_context[conv_id]["merchant"] = self.context_store.get_context("merchant", merchant_id)
+                if customer_id:
+                    self.conversation_context[conv_id]["customer"] = self.context_store.get_context("customer", customer_id)
 
         if from_role == "merchant":
             if self._is_auto_reply(message):
@@ -56,10 +76,45 @@ class ConversationManager:
 
         return {
             "action": "send",
-            "body": "Got it, let me process that for you.",
+            "body": self._generate_contextual_reply(conv_id, message),
             "cta": "open_ended",
-            "rationale": "Continuing conversation"
+            "rationale": "Processing merchant's specific inquiry"
         }
+
+    def _generate_contextual_reply(self, conv_id: str, message: str) -> str:
+        """Generate contextual reply based on conversation history and stored context."""
+        history = self.conversations.get(conv_id, [])
+        msg_lower = message.lower()
+        context = self.conversation_context.get(conv_id, {})
+        merchant = context.get("merchant", {})
+        merchant_name = merchant.get("identity", {}).get("name", "there") if merchant else "there"
+
+        # Check for booking-related queries
+        if any(word in msg_lower for word in ["book", "appointment", "schedule", "slot"]):
+            return f"Great {merchant_name}! I can help you book that. What date and time works best for you?"
+
+        # Check for X-ray/equipment queries
+        if any(word in msg_lower for word in ["x-ray", "radiograph", "dose", "film", "equipment"]):
+            return f"{merchant_name}, I'll help you audit your X-ray setup for DCI compliance. What unit model and film type are you currently using?"
+
+        # Check for help requests
+        if any(word in msg_lower for word in ["help", "how", "what", "why"]):
+            return f"I'm here to help {merchant_name}! Could you tell me more about what you need assistance with?"
+
+        # Check for day mentions (scheduling)
+        if any(day in msg_lower for day in ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]):
+            return f"Perfect! I've noted your preferred day. What time would you prefer - morning, afternoon, or evening?"
+
+        # Check for time mentions
+        if any(word in msg_lower for word in ["am", "pm", "morning", "evening", "afternoon"]):
+            return f"Noted! I'll schedule that for you. Should I send you a confirmation message to share with the customer?"
+
+        # If conversation has multiple exchanges, be more specific
+        if len(history) > 2:
+            return f"Thanks for the details {merchant_name}! Let me prepare everything for you. Anything else you'd like me to include?"
+
+        # Default contextual response
+        return f"Got it {merchant_name}! I'm working on that for you. Is there anything specific you'd like me to focus on?"
 
     def _is_auto_reply(self, message: str) -> bool:
         msg_lower = message.lower()
