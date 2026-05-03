@@ -34,25 +34,25 @@ class Composer:
                     "max_tokens": 300
                 },
                 headers={"Authorization": f"Bearer {self.groq_api_key}", "Content-Type": "application/json"},
-                 timeout=30
-             )
-             response.raise_for_status()
-             llm_response = response.json()["choices"][0]["message"]["content"]
+                timeout=30
+            )
+            response.raise_for_status()
+            llm_response = response.json()["choices"][0]["message"]["content"]
 
-             result = self._extract_json(llm_response)
+            result = self._extract_json(llm_response)
 
-             # Validate response has required specificity
-             body = result.get("body", "")
-             if not self._validate_specificity(body):
-                 print(f"WARNING: Low specificity in LLM response: {body[:100]}...")
+            # Validate response has required specificity
+            body = result.get("body", "")
+            if not self._validate_specificity(body):
+                print(f"WARNING: Low specificity in LLM response: {body[:100]}...")
 
-             return {
-                 "body": result.get("body", ""),
-                 "cta": result.get("cta", "open_ended"),
-                 "send_as": result.get("send_as", send_as),
-                 "suppression_key": result.get("suppression_key", trigger.get("suppression_key", "")),
-                 "rationale": result.get("rationale", "")
-             }
+            return {
+                "body": result.get("body", ""),
+                "cta": result.get("cta", "open_ended"),
+                "send_as": result.get("send_as", send_as),
+                "suppression_key": result.get("suppression_key", trigger.get("suppression_key", "")),
+                "rationale": result.get("rationale", "")
+            }
         except Exception as e:
             print(f"Groq error: {e}")
             owner = merchant.get("identity", {}).get("owner_first_name", "there")
