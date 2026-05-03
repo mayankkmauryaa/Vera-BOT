@@ -15,7 +15,7 @@ MAX_ACTIONS_PER_TICK = 20
 app = FastAPI(title="Vera AI Challenge Bot")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for dashboard
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
