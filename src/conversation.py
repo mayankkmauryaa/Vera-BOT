@@ -41,6 +41,26 @@ class ConversationManager:
             "gst", "filing", "tax", "website", "seo"
         ]
 
+    def _load_system_prompt(self) -> str:
+        """Load system prompt from file."""
+        prompt_path = os.path.join(os.path.dirname(__file__), "prompts", "system_prompt.txt")
+        try:
+            with open(prompt_path, 'r') as f:
+                return f.read()
+        except Exception as e:
+            print(f"Error loading system prompt: {e}")
+            return "You are Vera, merchant AI assistant."
+
+    def _load_few_shot_examples(self) -> dict:
+        """Load few-shot examples from JSON file."""
+        examples_path = os.path.join(os.path.dirname(__file__), "prompts", "few_shot_examples.json")
+        try:
+            with open(examples_path, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error loading few-shot examples: {e}")
+            return {}
+
     def handle_reply(self, conv_id: str, merchant_id: Optional[str],
                     customer_id: Optional[str], message: str,
                     turn_number: int, from_role: str = "merchant") -> Dict[str, Any]:
