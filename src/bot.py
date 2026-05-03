@@ -46,6 +46,7 @@ async def metadata():
         "approach": APPROACH,
         "contact_email": CONTACT_EMAIL,
         "version": VERSION,
+        "frontend_url": FRONTEND_URL,
         "submitted_at": datetime.utcnow().isoformat() + "Z"
     }
 

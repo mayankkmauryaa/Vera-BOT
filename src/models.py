@@ -64,6 +64,7 @@ class MetadataResponse(BaseModel):
     approach: str
     contact_email: str
     version: str
+    frontend_url: Optional[str] = None
     submitted_at: str
 
 
