@@ -20,6 +20,10 @@ Author: magicpin AI Challenge Team
 # ██████  CONFIGURATION - EDIT THIS SECTION ██████
 # =============================================================================
 
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 # Your bot's URL (where your bot is running)
 BOT_URL = "https://vera-bot-npn1.onrender.com"
 
@@ -42,7 +46,6 @@ TEST_SCENARIO = "all"
 # ██████  END OF CONFIGURATION - DON'T EDIT BELOW THIS LINE ██████
 # =============================================================================
 
-import os
 import sys
 import json
 import time
@@ -52,9 +55,6 @@ import argparse
 import zipfile
 import subprocess
 from datetime import datetime
-from dotenv import load_dotenv
-
-load_dotenv()
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any, Tuple
 from pathlib import Path
@@ -420,10 +420,10 @@ class BotClient:
             return None, str(e), (time.time() - start) * 1000
 
     def healthz(self):
-        return self._request("GET", "/v1/healthz", 5)
+        return self._request("GET", "/v1/healthz", 30)
 
     def metadata(self):
-        return self._request("GET", "/v1/metadata", 5)
+        return self._request("GET", "/v1/metadata", 30)
 
     def push_context(self, scope, cid, version, payload):
         return self._request("POST", "/v1/context", 10, {

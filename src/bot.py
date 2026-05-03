@@ -1,6 +1,9 @@
 import time
 from datetime import datetime
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from src.config import *
 from src.models import *
 from src.context_store import ContextStore
@@ -10,6 +13,13 @@ from src.conversation import ConversationManager
 MAX_ACTIONS_PER_TICK = 20
 
 app = FastAPI(title="Vera AI Challenge Bot")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins for dashboard
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 START_TIME = time.time()
 
 context_store = ContextStore()

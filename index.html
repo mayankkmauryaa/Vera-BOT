@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vera Bot API Dashboard v1.2.0</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+      a {
+        background-color: aquamarine;
+        text-decoration: none;
+        color: #1f2937;
+        font-size: large;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .header h1 {
+        color: #667eea;
+        margin-bottom: 10px;
+      }
+      .header .status {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+      }
+      .status-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .status-dot.online {
+        background: #10b981;
+      }
+      .status-dot.offline {
+        background: #ef4444;
+      }
+      .card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .card h2 {
+        color: #764ba2;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 10px;
+      }
+      .endpoint {
+        font-family: monospace;
+        color: #667eea;
+        font-weight: bold;
+      }
+      .method-get {
+        color: #10b981;
+      }
+      .method-post {
+        color: #f59e0b;
+      }
+      input,
+      textarea,
+      select,
+      button {
+        width: 100%;
+        padding: 10px;
+        margin: 5px 0;
+        border: 1px solid #d1d5db;
+        border-radius: 5px;
+        font-size: 14px;
+      }
+      button {
+        background: #667eea;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background 0.3s;
+      }
+      button:hover {
+        background: #764ba2;
+      }
+      .response {
+        background: #1f2937;
+        color: #d1d5db;
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 10px;
+        font-family: monospace;
+        font-size: 12px;
+        max-height: 300px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 20px;
+      }
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      @media (max-width: 768px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .two-col {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🤖 Vera Bot API Dashboard</h1>
+        <a href="https://vera-bot-npn1.onrender.com">Live Bot URL</a>
+        <div class="status">
+          <div>
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText">Checking...</span>
+          </div>
+          <div>Uptime: <span id="uptime">--</span>s</div>
+          <div>Contexts: <span id="contexts">--</span></div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- Health Check -->
+        <div class="card">
+          <h2>
+            <span class="endpoint"
+              ><span class="method-get">GET</span> /v1/healthz</span
+            >
+          </h2>
+          <button onclick="testHealthz()">Test Now</button>
+          <div class="response" id="healthzResponse"></div>
+        </div>
+
+        <!-- Metadata -->
+        <div class="card">
+          <h2>
+            <span class="endpoint"
+              ><span class="method-get">GET</span> /v1/metadata</span
+            >
+          </h2>
+          <button onclick="testMetadata()">Test Now</button>
+          <div class="response" id="metadataResponse"></div>
+        </div>
+
+        <!-- Context Push -->
+        <div class="card">
+          <h2>
+            <span class="endpoint"
+              ><span class="method-post">POST</span> /v1/context</span
+            >
+          </h2>
+          <select id="ctxScope">
+            <option value="merchant">merchant</option>
+            <option value="category">category</option>
+            <option value="trigger">trigger</option>
+            <option value="customer">customer</option>
+          </select>
+          <input
+            type="text"
+            id="ctxId"
+            placeholder="Context ID (e.g., merchant_001)"
+          />
+          <input
+            type="number"
+            id="ctxVersion"
+            placeholder="Version"
+            value="1"
+          />
+          <textarea
+            id="ctxPayload"
+            rows="4"
+            placeholder='Payload (JSON): {"name": "Test"}'
+          >
+{"name": "Test", "category_slug": "dentists"}</textarea
+          >
+          <button onclick="testContext()">Send Request</button>
+          <div class="response" id="contextResponse"></div>
+        </div>
+
+        <!-- Tick -->
+        <div class="card">
+          <h2>
+            <span class="endpoint"
+              ><span class="method-post">POST</span> /v1/tick</span
+            >
+          </h2>
+          <input
+            type="text"
+            id="tickNow"
+            value="2026-05-03T14:00:00Z"
+            placeholder="Now (ISO timestamp)"
+          />
+          <textarea
+            id="tickTriggers"
+            rows="3"
+            placeholder="Available Triggers (JSON array)"
+          >
+["trigger_001"]</textarea
+          >
+          <button onclick="testTick()">Send Request</button>
+          <div class="response" id="tickResponse"></div>
+        </div>
+
+        <!-- Reply -->
+        <div class="card">
+          <h2>
+            <span class="endpoint"
+              ><span class="method-post">POST</span> /v1/reply</span
+            >
+          </h2>
+          <div class="two-col">
+            <input
+              type="text"
+              id="replyConvId"
+              placeholder="Conversation ID"
+              value="conv_001"
+            />
+            <input
+              type="text"
+              id="replyMerchantId"
+              placeholder="Merchant ID"
+              value="merchant_001"
+            />
+          </div>
+          <input
+            type="text"
+            id="replyMessage"
+            placeholder="Message"
+            value="What about DCI compliance?"
+          />
+          <div class="two-col">
+            <input
+              type="number"
+              id="replyTurn"
+              placeholder="Turn Number"
+              value="1"
+            />
+            <select id="replyRole">
+              <option value="merchant">merchant</option>
+              <option value="customer">customer</option>
+            </select>
+          </div>
+          <button onclick="testReply()">Send Request</button>
+          <div class="response" id="replyResponse"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Use deployed live bot URL - frontend served locally, backend is live
+      const BASE_URL = "https://vera-bot-npn1.onrender.com";
+
+      async function apiCall(endpoint, method = "GET", body = null) {
+        const url = `${BASE_URL}${endpoint}`;
+        const options = { method, headers: {} };
+        if (body) {
+          options.headers["Content-Type"] = "application/json";
+          options.body = JSON.stringify(body);
+        }
+        const response = await fetch(url, options);
+        const data = await response.json();
+        return { status: response.status, data };
+      }
+
+      function displayResponse(elementId, { status, data }) {
+        const el = document.getElementById(elementId);
+        el.textContent = `HTTP ${status}\n\n${JSON.stringify(data, null, 2)}`;
+      }
+
+      async function testHealthz() {
+        const result = await apiCall("/v1/healthz");
+        displayResponse("healthzResponse", result);
+        const dot = document.getElementById("statusDot");
+        const text = document.getElementById("statusText");
+        if (result.status === 200) {
+          dot.className = "status-dot online";
+          text.textContent = "Online";
+          document.getElementById("uptime").textContent =
+            result.data.uptime_seconds;
+          document.getElementById("contexts").textContent = JSON.stringify(
+            result.data.contexts_loaded,
+          );
+        } else {
+          dot.className = "status-dot offline";
+          text.textContent = "Offline";
+        }
+      }
+
+      async function testMetadata() {
+        const result = await apiCall("/v1/metadata");
+        displayResponse("metadataResponse", result);
+      }
+
+      async function testContext() {
+        const scope = document.getElementById("ctxScope").value;
+        const context_id = document.getElementById("ctxId").value;
+        const version = parseInt(document.getElementById("ctxVersion").value);
+        const payload = JSON.parse(document.getElementById("ctxPayload").value);
+        const body = {
+          scope,
+          context_id,
+          version,
+          payload,
+          delivered_at: new Date().toISOString(),
+        };
+        const result = await apiCall("/v1/context", "POST", body);
+        displayResponse("contextResponse", result);
+      }
+
+      async function testTick() {
+        const now = document.getElementById("tickNow").value;
+        const triggers = JSON.parse(
+          document.getElementById("tickTriggers").value,
+        );
+        const body = { now, available_triggers: triggers };
+        const result = await apiCall("/v1/tick", "POST", body);
+        displayResponse("tickResponse", result);
+      }
+
+      async function testReply() {
+        const conversation_id = document.getElementById("replyConvId").value;
+        const merchant_id = document.getElementById("replyMerchantId").value;
+        const message = document.getElementById("replyMessage").value;
+        const turn_number = parseInt(
+          document.getElementById("replyTurn").value,
+        );
+        const from_role = document.getElementById("replyRole").value;
+        const body = {
+          conversation_id,
+          merchant_id,
+          message,
+          turn_number,
+          from_role,
+          received_at: new Date().toISOString(),
+        };
+        const result = await apiCall("/v1/reply", "POST", body);
+        displayResponse("replyResponse", result);
+      }
+
+      // Auto-test health on load
+      window.onload = function () {
+        testHealthz();
+      };
+    </script>
+  </body>
+</html>

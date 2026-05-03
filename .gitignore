@@ -55,4 +55,7 @@ examples/
 website.md
 
 # Test files (generated during testing)
-test_*.json
+test_data/
+
+# Static files (for dashboard)
+static/
